@@ -10,6 +10,8 @@ class Invaders(Ship):
 
     def __init__(self, x, y, color, health=100):
         super().__init__(x, y, health)
+        #
+        
         self.ship_img, self.laser_img = self.COLOR_MAP[color]
         self.mask = pygame.mask.from_surface(self.ship_img)
 

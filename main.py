@@ -2,10 +2,15 @@ import pygame
 import random
 from settings import *
 from Ship import Ship
-from Laser import Laser
+from Bunker import Bunker
 from Player import Player
 from Invaders import Invaders
+
 pygame.font.init()
+
+green = (0, 255, 0)
+red = (255, 0, 0)
+
 
 def collide(obj1, obj2):
     offset_x = obj2.x - obj1.x
@@ -14,7 +19,7 @@ def collide(obj1, obj2):
 
 
 def main():
-    playing = True # running the game
+    playing = True  # running the game
     FPS = 60
     level = 0
     lives = 5
@@ -22,13 +27,18 @@ def main():
     lost_font = pygame.font.SysFont("comicsans", 60)
 
     invaders = []  # store were the enimies will be
+    bunkers = []
     wave_length = 5  # every level will generate a new amount of enimies
     enemy_vel = 1  # time of movement
 
     player_vel = 5
     laser_vel = 5
 
-    player = Player(300, 630)
+    player = Player(330, 630)
+
+    bunker1 = Bunker(50, 500)
+    bunker2 = Bunker(350, 500)
+    bunker3 = Bunker(600, 500)
 
     clock = pygame.time.Clock()
 
@@ -49,15 +59,15 @@ def main():
             invader.draw(WIN)
 
         player.draw(WIN)
-
-        if cast_away:
-            lost_label = lost_font.render("You Lost!!", 1, (255, 255, 255))
-            WIN.blit(lost_label, (WIDTH / 2 - lost_label.get_width() / 2, 350))
+        bunker1.draw(WIN)
+        bunker2.draw(WIN)
+        bunker3.draw(WIN)
 
         pygame.display.update()  # refresh the screen
 
-    while playing: # running the game
+    while playing:  # running the game
         clock.tick(FPS)  # it will run with the same speed in any devices
+
         redraw_window()
 
         if lives <= 0 or player.health <= 0:
@@ -94,6 +104,19 @@ def main():
             player.y += player_vel
         if keys[pygame.K_SPACE]:
             player.shoot()
+
+            # move them down
+        for bunker in bunkers[:]:
+            # bunker.action(enemy_vel)
+            # bunker.move_lasers(laser_vel, player)
+
+            if collide(player, bunker):
+                bunker.health -= 10
+                bunkers.remove(bunker)
+                print(1)
+            elif bunker.y + bunker.get_height() > HEIGHT:
+                lives -= 1
+                bunkers.remove(bunker)
 
         # move them down
         for invader in invaders[:]:
