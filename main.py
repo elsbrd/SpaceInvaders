@@ -1,5 +1,7 @@
 import pygame
 import random
+
+from Search import search
 from settings import *
 from Ship import Ship
 from Bunker import Bunker
@@ -19,8 +21,9 @@ def collide(obj1, obj2):
 
 
 def main():
+    global method
     playing = True  # running the game
-    FPS = 60
+    FPS = 20
     level = 0
     lives = 5
     main_font = pygame.font.SysFont("comicsans", 50)
@@ -28,18 +31,16 @@ def main():
 
     invaders = []  # store were the enimies will be
     bunkers = []
-    wave_length = 5  # every level will generate a new amount of enimies
+    wave_length = 1  # every level will generate a new amount of enimies
     enemy_vel = 1  # time of movement
 
     player_vel = 5
     laser_vel = 5
 
+
+
     player = Player(330, 630)
 
-    # Нахуя тебе три переменных, если у тебя есть массив бункеров)))))))))))))
-    # bunker1 = Bunker(50, 500)
-    # bunker2 = Bunker(350, 500)
-    # bunker3 = Bunker(600, 500)
     bunkers.extend([Bunker(50, 500), Bunker(350, 500), Bunker(600, 500)])
 
     clock = pygame.time.Clock()
@@ -65,13 +66,20 @@ def main():
         # Почему бы не делать три переменных, а просто итерировать массив?...
         for bunker in bunkers:
             bunker.draw(WIN)
-
+        for line in search(player, invaders, bunkers, method):
+                for i in line:
+                    WIN.set_at((i[0], i[1]), (255, 0, 0))
+                    WIN.set_at((i[0] + 1, i[1]), (255, 0, 0))
+                    WIN.set_at((i[0] - 1, i[1]), (255, 0, 0))
+                    WIN.set_at((i[0], i[1] + 1), (255, 0, 0))
+                    WIN.set_at((i[0], i[1] - 1), (255, 0, 0))
+                    WIN.set_at((i[0] + 1, i[1] + 1), (255, 0, 0))
+                    WIN.set_at((i[0] - 1, i[1] - 1), (255, 0, 0))
         pygame.display.update()  # refresh the screen
 
     while playing:  # running the game
         clock.tick(FPS)  # it will run with the same speed in any devices
 
-        redraw_window()
 
         if lives <= 0 or player.health <= 0:
             cast_away = True
@@ -86,15 +94,19 @@ def main():
         # the start movement of the enemies
         if len(invaders) == 0:
             level += 1
-            wave_length += 5
+            # wave_length += 5
             for i in range(wave_length):
-                invader = Invaders(random.randrange(50, WIDTH - 100), random.randrange(-1500, -100),
+                invader = Invaders(random.randrange(50, WIDTH - 100), random.randrange(0, 10),
                                    random.choice(["red", "blue", "green"]))
                 invaders.append(invader)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:  # if we press quit it will stop running
                 quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_z:
+                    method = snext(method)
+                    print(method)
 
         keys = pygame.key.get_pressed()  # returning the dictionary of all the keys and tells u whether they r pressed or not at the current time
         if keys[pygame.K_a] and player.x - player_vel > 0:  # left
@@ -138,10 +150,13 @@ def main():
                 lives -= 1
                 invaders.remove(invader)
 
+
         # Функцие мув лазерс я просто тупо добавил неограниченное количество остаточных параметров,
         # чтобы можно было передавать несколько массивов врагов (у тебя их два - враги-корабли и астероиды)
         player.move_lasers(-laser_vel, invaders, bunkers)  # to make the space cruft to do up
         # Тут была главная проблема, потому что ты не проверяла на сталкивания с астероидами вообще
+        redraw_window()
+
 
 
 def main_menu():
