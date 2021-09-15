@@ -36,9 +36,11 @@ def main():
 
     player = Player(330, 630)
 
-    bunker1 = Bunker(50, 500)
-    bunker2 = Bunker(350, 500)
-    bunker3 = Bunker(600, 500)
+    # Нахуя тебе три переменных, если у тебя есть массив бункеров)))))))))))))
+    # bunker1 = Bunker(50, 500)
+    # bunker2 = Bunker(350, 500)
+    # bunker3 = Bunker(600, 500)
+    bunkers.extend([Bunker(50, 500), Bunker(350, 500), Bunker(600, 500)])
 
     clock = pygame.time.Clock()
 
@@ -59,9 +61,10 @@ def main():
             invader.draw(WIN)
 
         player.draw(WIN)
-        bunker1.draw(WIN)
-        bunker2.draw(WIN)
-        bunker3.draw(WIN)
+
+        # Почему бы не делать три переменных, а просто итерировать массив?...
+        for bunker in bunkers:
+            bunker.draw(WIN)
 
         pygame.display.update()  # refresh the screen
 
@@ -106,12 +109,14 @@ def main():
             player.shoot()
 
             # move them down
-        for bunker in bunkers[:]:
+        for bunker in bunkers:
             # bunker.action(enemy_vel)
+            # Лазеров у бункера тоже нет)))
             # bunker.move_lasers(laser_vel, player)
 
             if collide(player, bunker):
-                bunker.health -= 10
+                # Здоровья у астероида нет, шо за код?)))
+                # bunker.health -= 10
                 bunkers.remove(bunker)
                 print(1)
             elif bunker.y + bunker.get_height() > HEIGHT:
@@ -121,7 +126,7 @@ def main():
         # move them down
         for invader in invaders[:]:
             invader.action(enemy_vel)
-            invader.move_lasers(laser_vel, player)
+            invader.move_lasers(laser_vel, player, bunkers)
 
             if random.randrange(0, 2 * 60) == 1:  # probability of 50% of shooting
                 invader.shoot()
@@ -133,7 +138,10 @@ def main():
                 lives -= 1
                 invaders.remove(invader)
 
-        player.move_lasers(-laser_vel, invaders)  # to make the space cruft to do up
+        # Функцие мув лазерс я просто тупо добавил неограниченное количество остаточных параметров,
+        # чтобы можно было передавать несколько массивов врагов (у тебя их два - враги-корабли и астероиды)
+        player.move_lasers(-laser_vel, invaders, bunkers)  # to make the space cruft to do up
+        # Тут была главная проблема, потому что ты не проверяла на сталкивания с астероидами вообще
 
 
 def main_menu():

@@ -17,7 +17,7 @@ class Ship:
         for laser in self.lasers:
             laser.draw(window)
 
-    def move_lasers(self, vel, obj):
+    def move_lasers(self, vel, obj, *args):
         self.cooldown()  # check if we can send another laser
         for laser in self.lasers:
             laser.move(vel)
@@ -26,6 +26,13 @@ class Ship:
             elif laser.collision(obj):
                 obj.health -= 10
                 self.lasers.remove(laser)
+            else:
+                for objs in args:
+                    for obj in objs:  # if it collided remove the object
+                        if laser.collision(obj):
+                            objs.remove(obj)
+                            if laser in self.lasers:
+                                self.lasers.remove(laser)
 
     def cooldown(self):
         if self.cool_down_counter >= self.reduce:

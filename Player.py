@@ -8,19 +8,19 @@ class Player(Ship):
         self.mask = pygame.mask.from_surface(self.ship_img)
         self.max_health = health
 
-    def move_lasers(self, vel, objs):
+    def move_lasers(self, vel, *args):
         self.cooldown()
         for laser in self.lasers:
             laser.move(vel)
             if laser.off_screen(HEIGHT):
                 self.lasers.remove(laser)
             else:
-                for obj in objs:  # if it collided remove the object
-                    if laser.collision(obj):
-                        objs.remove(obj)
-                        if laser in self.lasers:
-                            self.lasers.remove(laser)
-
+                for objs in args:
+                    for obj in objs:  # if it collided remove the object
+                        if laser.collision(obj):
+                            objs.remove(obj)
+                            if laser in self.lasers:
+                                self.lasers.remove(laser)
 
     def draw(self, window):
         super().draw(window)
