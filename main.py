@@ -63,18 +63,21 @@ def main():
 
         player.draw(WIN)
 
-        # Почему бы не делать три переменных, а просто итерировать массив?...
+        import time
+        start_time = time.time()
+        for i in search(player, invaders, bunkers, method):
+            print("%s seconds" % (time.time() - start_time))
         for bunker in bunkers:
             bunker.draw(WIN)
         for line in search(player, invaders, bunkers, method):
                 for i in line:
-                    WIN.set_at((i[0], i[1]), (255, 0, 0))
-                    WIN.set_at((i[0] + 1, i[1]), (255, 0, 0))
-                    WIN.set_at((i[0] - 1, i[1]), (255, 0, 0))
-                    WIN.set_at((i[0], i[1] + 1), (255, 0, 0))
-                    WIN.set_at((i[0], i[1] - 1), (255, 0, 0))
-                    WIN.set_at((i[0] + 1, i[1] + 1), (255, 0, 0))
-                    WIN.set_at((i[0] - 1, i[1] - 1), (255, 0, 0))
+                    WIN.set_at((i[0], i[1]), green)
+                    WIN.set_at((i[0] + 1, i[1]), green)
+                    WIN.set_at((i[0] - 1, i[1]), green)
+                    WIN.set_at((i[0], i[1] + 1), green)
+                    WIN.set_at((i[0], i[1] - 1), green)
+                    WIN.set_at((i[0] + 1, i[1] + 1), green)
+                    WIN.set_at((i[0] - 1, i[1] - 1), green)
         pygame.display.update()  # refresh the screen
 
     while playing:  # running the game

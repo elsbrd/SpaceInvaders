@@ -26,9 +26,6 @@ found = False
 
 
 def dfs(WIN, matrix, ship_mask_with_pos, path, curr):
-    '''прохід дфс'''
-    # WIN.set_at(curr, (255, 255, 255))
-    # pygame.display.update()
     global found
     global visited
     if found:
@@ -69,7 +66,7 @@ path = []
 
 def bfs(matrix, current, player):
     '''прохід бфс'''
-    print("шукаємо bfs")
+    print("seaching for bfs")
     global found, path, visited, queue
     queue.append(current)
     curr = current
@@ -109,7 +106,7 @@ matrix_uni = [[[] for i in range(WIDTH)] for j in range(HEIGHT)]
 
 
 def uniform(matrix, current, player):
-    print("шукаємо ucs")
+    print("searching ucs")
     global found, path, visited, queue
     queue.append(current)
     curr = current
@@ -118,9 +115,6 @@ def uniform(matrix, current, player):
         visited.append(curr)
 
         visited.append(curr)
-        # WIN.set_at(curr, (0, 255, 255))
-        # pygame.display.update()
-
         for i in [(0, -accur), (-accur, 0), (accur, 0),
                   (0, accur)]:
             new_curr = (curr[0] + i[0], curr[1] + i[1])
@@ -192,7 +186,6 @@ def search(player, invaders, bunkers, method):
     for bunker in bunkers:
         for point in bunker.mask.outline():
             matrix[point[1] + bunker.y][point[0] + bunker.x] = 3
-    # draw_matrix(matrix)
     if method == 'dfs':
         line = dfs(WIN, matrix, pos, [], ((max(player.mask.outline(), key=lambda coords: coords[0])[0] +
                                            min(player.mask.outline(), key=lambda coords: coords[0])[0]) // 2 +
