@@ -4,8 +4,6 @@ from matplotlib import pyplot as plt
 from settings import *
 
 matrix = [[0 for i in range(HEIGHT)] for j in range(WIDTH)]
-# for i in matrix:
-#     print(i)
 sys.setrecursionlimit(99999999)
 
 
@@ -20,9 +18,47 @@ def check(matrix, ship_mask_with_pos):
             return 'out'
     return False
 
-
 visited = []
 found = False
+
+def bfs(matrix, current, player):
+    '''прохід бфс'''
+    print("seaching for bfs")
+    global found, path, visited, queue
+    queue.append(current)
+    curr = current
+    while len(queue) != 0 and not found:
+        curr = queue[0]
+        visited.append(curr)
+        if found:
+            queue.append(curr)
+            return poped_queue
+        visited.append(curr)
+        WIN.set_at(curr, (0, 255, 255))
+        pygame.display.update()
+        for i in [(0, -accur), (-accur, 0), (accur, 0),
+                  (0, accur)]:
+            new_curr = (curr[0] + i[0], curr[1] + i[1])
+            new_ship_mask_with_pos = [(int(h[0] + i[0] + new_curr[0] - YELLOW_SPACE_SHIP.get_width() / 2),
+                                       int(h[1] + i[1] + new_curr[1] - YELLOW_SPACE_SHIP.get_height() / 2)) for h in
+                                      player.mask.outline()]
+
+            check_res = check(matrix, new_ship_mask_with_pos)
+            if check_res == 'back':
+                visited.append(new_curr)
+            elif check(matrix, new_ship_mask_with_pos) == 'found':
+                poped_queue.append(curr)
+                poped_queue.append(new_curr)
+                found = True
+                return poped_queue
+            elif new_curr not in visited:
+                queue.append(new_curr)
+
+        poped_queue.append(queue.pop(0))
+
+    return []
+
+
 
 
 def dfs(WIN, matrix, ship_mask_with_pos, path, curr):
@@ -63,43 +99,6 @@ poped_queue = []
 
 path = []
 
-
-def bfs(matrix, current, player):
-    '''прохід бфс'''
-    print("seaching for bfs")
-    global found, path, visited, queue
-    queue.append(current)
-    curr = current
-    while len(queue) != 0 and not found:
-        curr = queue[0]
-        visited.append(curr)
-        if found:
-            queue.append(curr)
-            return poped_queue
-        visited.append(curr)
-        WIN.set_at(curr, (0, 255, 255))
-        pygame.display.update()
-        for i in [(0, -accur), (-accur, 0), (accur, 0),
-                  (0, accur)]:
-            new_curr = (curr[0] + i[0], curr[1] + i[1])
-            new_ship_mask_with_pos = [(int(h[0] + i[0] + new_curr[0] - YELLOW_SPACE_SHIP.get_width() / 2),
-                                       int(h[1] + i[1] + new_curr[1] - YELLOW_SPACE_SHIP.get_height() / 2)) for h in
-                                      player.mask.outline()]
-
-            check_res = check(matrix, new_ship_mask_with_pos)
-            if check_res == 'back':
-                visited.append(new_curr)
-            elif check(matrix, new_ship_mask_with_pos) == 'found':
-                poped_queue.append(curr)
-                poped_queue.append(new_curr)
-                found = True
-                return poped_queue
-            elif new_curr not in visited:
-                queue.append(new_curr)
-
-        poped_queue.append(queue.pop(0))
-
-    return []
 
 
 matrix_uni = [[[] for i in range(WIDTH)] for j in range(HEIGHT)]

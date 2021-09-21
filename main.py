@@ -23,7 +23,7 @@ def collide(obj1, obj2):
 def main():
     global method
     playing = True  # running the game
-    FPS = 20
+    FPS = 0
     level = 0
     lives = 5
     main_font = pygame.font.SysFont("comicsans", 50)
@@ -40,8 +40,8 @@ def main():
 
 
     player = Player(330, 630)
-
-    bunkers.extend([Bunker(50, 500), Bunker(350, 500), Bunker(600, 500)])
+    for i in range (12):
+        bunkers.extend([Bunker(random.randrange(0, 750),random.randrange(0, 750))])
 
     clock = pygame.time.Clock()
 
@@ -97,9 +97,9 @@ def main():
         # the start movement of the enemies
         if len(invaders) == 0:
             level += 1
-            # wave_length += 5
+            #wave_length += 5
             for i in range(wave_length):
-                invader = Invaders(random.randrange(50, WIDTH - 100), random.randrange(0, 10),
+                invader = Invaders(random.randrange(50, WIDTH - 100), random.randrange(10, 100),
                                    random.choice(["red", "blue", "green"]))
                 invaders.append(invader)
 
