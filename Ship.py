@@ -1,7 +1,7 @@
 from settings import *
 from Laser import Laser
 class Ship:
-    reduce = 30 # cool down
+    reduce = 3 # cool down
 
     def __init__(self, x, y, health=100):
         self.x = x
@@ -42,7 +42,7 @@ class Ship:
 
     def shoot(self):
         if self.cool_down_counter == 0:
-            laser = Laser(self.x, self.y, self.laser_img)  # create new Laser
+            laser = Laser(self.x+int(self.ship_img.get_width()/2), self.y, self.laser_img)  # create new Laser
             self.lasers.append(laser)
             self.cool_down_counter = 1
 

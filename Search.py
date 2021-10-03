@@ -1,3 +1,4 @@
+import random
 import sys
 from matplotlib import pyplot as plt
 
@@ -10,13 +11,12 @@ sys.setrecursionlimit(99999999)
 def check(matrix, ship_mask_with_pos):
     for point in ship_mask_with_pos:
         try:
-            if matrix[point[1]][point[0]] == 2:
-                return 'found'
-            elif matrix[point[1]][point[0]] == 3:
-                return "back"
+            if matrix[point[1]][point[0]] == 5:
+                return 1
+            elif matrix[point[1]][point[0]] == 1:
+                return 2
         except IndexError:
-            return 'out'
-    return False
+            return 2
 
 visited = []
 found = False
@@ -144,6 +144,123 @@ def uniform(matrix, current, player):
     return []
 
 
+
+class Node():
+    """A node class for A* Pathfinding"""
+
+    def __init__(self, parent=None, position=None):
+        self.parent = parent
+        self.position = position
+
+        self.g = 0
+        self.h = 0
+        self.f = 0
+
+    def __eq__(self, other):
+        return self.position == other.position
+
+
+def astar(WIN, maze, start, end_center, mask,pl):
+    """Returns a list of tuples as a path from the given start to the given end in the given maze"""
+
+    # Create start and end node
+    start_node = Node(None, start)
+    start_node.g = start_node.h = start_node.f = 0
+
+    # Initialize both open and closed list
+    open_list = []
+    closed_list = []
+
+    # Add the start node
+    open_list.append(start_node)
+    counter = 750
+    # Loop until you find the end
+    while len(open_list) > 0 and counter > 0:
+        counter -= 1
+        # Get the current node
+        current_node = open_list[0]
+
+        current_index = 0
+        for index, item in enumerate(open_list):
+            if item.f < current_node.f:
+                current_node = item
+                current_index = index
+        # WIN.set_at(current_node.position, (255, 255, 0))
+        # pygame.display.update()
+        # Pop current off open list, add to closed list
+        open_list.pop(current_index)
+        closed_list.append(current_node)
+
+        # Found the goal
+
+        # for i in [(h[0] + current_node.position[0]-int(SHIP_IMG.get_width()/2), h[1] + current_node.position[1]) for h in mask]:
+        #     WIN.set_at(i,(255,124,10))
+
+        if check(maze, [(h[0] + current_node.position[0] - int(YELLOW_SPACE_SHIP.get_width() / 2),
+                         h[1] + current_node.position[1] - int(YELLOW_SPACE_SHIP.get_height() / 2)) for h in mask]) == 1:
+            # print('found')
+
+            path = []
+            current = current_node
+            while current is not None:
+                path.append(current.position)
+                current = current.parent
+            return path[::-1]  # Return reversed path
+
+        # Generate children
+        children = []
+        for new_position in [(0, -16), (0, 16), (-16, 0), (16, 0), (-16, -16), (-16, 16), (16, -16),
+                             (16, 16)]:  # Adjacent squares
+            # Get node position
+            node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
+            # Make sure within range
+            if node_position[0] > WIDTH - 1 or node_position[0] < 1 or node_position[1] > HEIGHT - 1 or node_position[
+                1] < 1:
+                continue
+            # Make sure walkable terrain
+            # Create new node
+            new_node = Node(current_node, node_position)
+            # Append
+            children.append(new_node)
+
+        # Loop through children
+        for child in children:
+            new_ship_mask_with_pos = [
+                (h[0] + child.position[0] - int(YELLOW_SPACE_SHIP.get_width() / 2),
+                 h[1] + child.position[1] - int(YELLOW_SPACE_SHIP.get_height() / 2)) for h in mask]
+            if check(maze, new_ship_mask_with_pos) == 2:
+                # print('continiue terrarian')
+                continue
+            if min(new_ship_mask_with_pos, key=lambda x: x[0])[0] < 0 or \
+                    min(new_ship_mask_with_pos, key=lambda x: x[1])[1] < 0:
+                continue
+            # Child is on the closed list
+            for closed_child in closed_list:
+                if child == closed_child:
+                    continue
+
+            # Create the f, g, and h values
+            child.g = current_node.g + 1
+            child.h = (abs((child.position[0] - end_center[0])) + (abs(child.position[1] - end_center[1]))) ** 1 / 2
+            child.f = child.g + child.h
+
+            # Child is already in the open list
+            for open_node in open_list:
+                if child == open_node and child.g > open_node.g:
+                    continue
+
+            # Add the child to the open list
+
+            for to_visit_node in open_list:
+                if to_visit_node == child and to_visit_node.g < child.g:
+                    continue
+            # WIN.set_at(child.position, (0, 255, 0))
+            # pygame.display.update()
+
+            open_list.append(child)
+    if counter<=0:
+        pl.x+= 20*random.choice([-1,1])
+
 def find_way(uni_matrix, point):
     way = [point]
     while point:
@@ -162,61 +279,53 @@ def search(player, invaders, bunkers, method):
     global visited, queue, path, found, line, poped_queue,matrix_uni
     lines = []
 
-    try:
-        for GOAL in invaders:
-            matrix = [[0 for i in range(HEIGHT)] for j in range(WIDTH)]
-            for inv in invaders:
-                for invpoint in inv.mask.outline():
-                    matrix[invpoint[1] + inv.y][invpoint[0] + inv.x] = 3
-                for laser in inv.lasers:
-                    for point in laser.mask.outline():
-                        matrix[point[1] + laser.y][point[0] + laser.x] = 3
-            for i in GOAL.mask.outline():
-                matrix[i[1] + GOAL.y][i[0] + GOAL.x] = 2
-    except IndexError:
-        pass
-    pos = []
-    for i in player.mask.outline():
-        if method == 'dfs':
-            pos.append((int(i[0]) + int(player.x), int(i[1]) + int(player.y)))
-        elif method == 'bfs' or method == 'ucs':
-            pos.append((int(i[0]), int(i[1])))
+    for GOAL in invaders:
+        matrix = [[0 for i in range(HEIGHT)] for j in range(WIDTH)]
+        for inv in invaders:
+            for invpoint in inv.mask.outline():
+                try:
+                    matrix[invpoint[1] + inv.y][invpoint[0] + inv.x] = 1
+                except IndexError:
+                    continue
+            for laser in inv.lasers:
+                for point in laser.mask.outline():
+                    try:
+                        matrix[point[1] + laser.y][point[0] + laser.x] = 1
+                    except IndexError:
+                        continue
+        for i in GOAL.mask.outline():
+            try:
+                matrix[i[1] + GOAL.y][i[0] + GOAL.x] = 5
+            except IndexError:
+                continue
+    
+        pos = []
+        for i in player.mask.outline():
+            if method == 'dfs':
+                pos.append((int(i[0]) + int(player.x), int(i[1]) + int(player.y)))
+            elif method == 'bfs' or method == 'ucs' or method == 'star':
+                pos.append((int(i[0]), int(i[1])))
 
-    for bunker in bunkers:
-        for point in bunker.mask.outline():
-            matrix[point[1] + bunker.y][point[0] + bunker.x] = 3
-    if method == 'dfs':
-        line = dfs(WIN, matrix, pos, [], ((max(player.mask.outline(), key=lambda coords: coords[0])[0] +
-                                           min(player.mask.outline(), key=lambda coords: coords[0])[0]) // 2 +
-                                          int(player.x),
-                                          (max(player.mask.outline(), key=lambda coords: coords[1])[1] +
-                                           min(player.mask.outline(), key=lambda coords: coords[1])[1]) // 2 + int(
-                                              player.y)))
-    elif method == 'bfs':
-        line = bfs(matrix, ((max(player.mask.outline(), key=lambda coords: coords[0])[0] +
-                             min(player.mask.outline(), key=lambda coords: coords[0])[0]) // 2 +
-                            int(player.x),
-                            (max(player.mask.outline(), key=lambda coords: coords[1])[1] +
-                             min(player.mask.outline(), key=lambda coords: coords[1])[1]) // 2 + int(
-                                player.y)), player)
-    elif method == 'ucs':
-        line = uniform(matrix, ((max(player.mask.outline(), key=lambda coords: coords[0])[0] +
-                                 min(player.mask.outline(), key=lambda coords: coords[0])[0]) // 2 +
-                                int(player.x),
-                                (max(player.mask.outline(), key=lambda coords: coords[1])[1] +
-                                 min(player.mask.outline(), key=lambda coords: coords[1])[1]) // 2 + int(
-                                    player.y)), player)
+        for bunker in bunkers:
+            for point in bunker.mask.outline():
+                try:
+                    matrix[point[1] + bunker.y][point[0] + bunker.x] = 1
+                except IndexError:
+                    continue
 
-    poped_queue = []
-    matrix_uni=[[[] for i in range(WIDTH)] for j in range(HEIGHT)]
-    if line:
-        lines.append(line)
+        line = astar(WIN, matrix,
+                         (int(player.x + player.ship_img.get_width() / 2), int(player.y + player.ship_img.get_height() / 2)),
+                         (int(GOAL.x + GOAL.ship_img.get_width() / 2), int(GOAL.y + GOAL.ship_img.get_height() / 2)), pos,player)
+
+        poped_queue = []
+        matrix_uni=[[[] for i in range(WIDTH)] for j in range(HEIGHT)]
+        if line:
+            lines.append(line)
+        found = False
+        visited = []
+        queue = []
+        path = []
     found = False
-    visited = []
-    queue = []
-    path = []
-    found = False
-    print(lines)
     return lines
 
 

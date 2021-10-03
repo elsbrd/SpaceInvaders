@@ -15,36 +15,12 @@ class Bunker():
         self.y = y
         self.bunker_img = BUNKER
         self.mask = pygame.mask.from_surface(self.bunker_img)
-        self.lasers = []
-        self.cool_down_counter = 0
-        self.max_health = health
-
 
     def draw(self, window):
         window.blit(self.bunker_img, (self.x, self.y))
 
     def collision(self, obj):
         return collide(self, obj)
-
-    def cooldown(self):
-        if self.cool_down_counter >= self.reduce:
-            self.cool_down_counter = 0
-        elif self.cool_down_counter > 0:
-            self.cool_down_counter += 1
-
-
-    def move_lasers(self, vel, objs):
-        self.cooldown()
-        for laser in self.lasers:
-            laser.move(vel)
-            if laser.off_screen(HEIGHT):
-                self.lasers.remove(laser)
-            else:
-                for obj in objs:  # if it collided remove the object
-                    if laser.collision(obj):
-                        objs.remove(obj)
-                        if laser in self.lasers:
-                            self.lasers.remove(laser)
 
     def get_width(self):
         return self.bunker_img.get_width()
