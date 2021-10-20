@@ -23,3 +23,6 @@ class Laser:
 
     def collision(self, obj):
         return collide(self, obj)
+
+    def copy_object(self):
+        return Laser(self.x,self.y,self.img)
