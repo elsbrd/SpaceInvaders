@@ -1,10 +1,12 @@
 import pygame
 import random
-
+from algorithm import *
 from Search import search
+from csv_write import csv_write
 from settings import *
 from Ship import Ship
 from Bunker import Bunker
+from Dumm import *
 from Player import Player
 from Invaders import Invaders
 
@@ -47,6 +49,12 @@ def main():
 
     cast_away = False  # lost
     lost_count = 0
+    def invadersHold():
+        lasers = []
+        for i in invaders:
+            for laser in i.lasers:
+                lasers.append(laser)
+        return lasers
 
     def redraw_window():
         WIN.blit(BG, (0, 0))
@@ -57,11 +65,15 @@ def main():
         # position of the labels
         WIN.blit(lives_label, (10, 10))
         WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
-
+        player.shoot()
         for invader in invaders:  # draw the enemies
             invader.draw(WIN)
 
         player.draw(WIN)
+
+        if cast_away:
+            lost_label = lost_font.render("You Lost!!", 1, (255, 255, 255))
+            WIN.blit(lost_label,(WIDTH/2-lost_label.get_width()/22, 350))
 
     while playing:  # running the game
         clock.tick(FPS)  # it will run with the same speed in any devices
@@ -80,11 +92,13 @@ def main():
         # the start movement of the enemies
         if len(invaders) == 0:
             level += 1
-            wave_length += 5
+            wave_length += 2
             for i in range(wave_length):
-                invader = Invaders(random.randrange(50, WIDTH - 100), random.randrange(10, 200),
-                                   random.choice(["red", "blue", "green"]))
-                invaders.append(invader)
+
+                invaders.append(Dummy(random.randrange(50, WIDTH - 100), random.randrange(10, 200),
+                              random.choice(["red", "blue", "green"])))
+                invaders.append(Invaders(random.randrange(50, WIDTH - 100), random.randrange(10, 200),
+                                         random.choice(["red", "blue", "green"])))
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:  # if we press quit it will stop running
@@ -109,41 +123,52 @@ def main():
             # move them down
         for bunker in bunkers:
             # bunker.action(enemy_vel)
-            # Лазеров у бункера тоже нет)))
             # bunker.move_lasers(laser_vel, player)
 
             if collide(player, bunker):
-                # Здоровья у астероида нет, шо за код?)))
                 # bunker.health -= 10
                 bunkers.remove(bunker)
                 print(1)
             elif bunker.y + bunker.get_height() > HEIGHT:
                 lives -= 1
                 bunkers.remove(bunker)
-        result_of_search = search(player, invaders, bunkers, method)
-        # print(result_of_search)
+        #result_of_search = search(player, invaders, bunkers, method)
+
+        import time
+        start_time = time.time()
+        (alpha_beta_result, direction) = alphabeta(Node(player, invaders, invadersHold(), '', bunkers), depth_recurtion, -float('inf'),float('inf'),False)
+        #(alpha_beta_result, direction) = expectiminimax(Node(player,  invaders, invadersHold(), '', bunkers), depth_recurtion, True)
+        print((alpha_beta_result, direction.move) )
+
+        # useless
         # move to target
-        if result_of_search:
-            target = min(result_of_search, key=len)
-            if player.x + YELLOW_SPACE_SHIP.get_width() / 2 < target[-1][0] - size_of_enemies / 2:
-                if player.x + YELLOW_SPACE_SHIP.get_width() + player_vel < WIDTH:
-                    player.x += player_vel
 
-            if player.x + YELLOW_SPACE_SHIP.get_width() / 2 > target[-1][0] + size_of_enemies / 2:
-                if player.x - player_vel > 0:
-                    player.x -= player_vel
+        # if result_of_search:
+        #     target = min(result_of_search, key=len)
+        #     if player.x + YELLOW_SPACE_SHIP.get_width() / 2 < target[-1][0] - size_of_enemies / 2:
+        #         if player.x + YELLOW_SPACE_SHIP.get_width() + player_vel < WIDTH:
+        #             player.x += player_vel
+        #
+        #     if player.x + YELLOW_SPACE_SHIP.get_width() / 2 > target[-1][0] + size_of_enemies / 2:
+        #         if player.x - player_vel > 0:
+        #             player.x -= player_vel
+        #
+        #     if player.x + YELLOW_SPACE_SHIP.get_width() / 2 in range(target[-1][0] - int(size_of_enemies / 2),
+        #                                                         target[-1][0] + int(size_of_enemies / 2)):
+        #         if player.x + YELLOW_SPACE_SHIP.get_width() / 2 < target[-1][0]:
+        #             player.x += player_vel
+        #         elif player.x + YELLOW_SPACE_SHIP.get_width() / 2 > target[-1][0]:
+        #             player.x -= player_vel
+        #         if len(player.lasers) < 8:
+        #             rand_koef = random.randint(0, 1000)
+        #             if rand_koef > 700:
+        #                 player.shoot()
+        # print(result_of_search)
+        dirs = {"<": (-8, 0), ">": (8, 0), '': (0, 0)}
 
-            if player.x + YELLOW_SPACE_SHIP.get_width() / 2 in range(target[-1][0] - int(size_of_enemies / 2),
-                                                                target[-1][0] + int(size_of_enemies / 2)):
-                if player.x + YELLOW_SPACE_SHIP.get_width() / 2 < target[-1][0]:
-                    player.x += player_vel
-                elif player.x + YELLOW_SPACE_SHIP.get_width() / 2 > target[-1][0]:
-                    player.x -= player_vel
-                if len(player.lasers) < 8:
-                    rand_koef = random.randint(0, 1000)
-                    if rand_koef > 700:
-                        player.shoot()
-        # run away from eggs
+        # move to target
+
+        player.x += dirs[direction.move][0]
         lasers = []
         for i in invaders:
             for laser in i.lasers:
@@ -152,8 +177,8 @@ def main():
             if bul.x in range(int(player.x) - int(RED_LASER.get_width()), int(player.x) + int(
                     YELLOW_SPACE_SHIP.get_width())) and bul.y < player.y + YELLOW_SPACE_SHIP.get_height() and player.y - (
                     bul.y + RED_LASER.get_height()) < 100:
-                # if bul.x in range(0 if chick.x-LASER_IMG.get_width()-1<0 else chick.x-LASER_IMG.get_width()-1,(WIDTH-size_of_enemies) if chick.x+size_of_enemies+1>WIDTH else WIDTH-size_of_enemies):
-                # if chicken more left from laser
+                # if bul.x in range(0 if ship.x-LASER_IMG.get_width()-1<0 else ship.x-LASER_IMG.get_width()-1,(WIDTH-size_of_enemies) if ship.x+size_of_enemies+1>WIDTH else WIDTH-size_of_enemies):
+                # if shipen more left from laser
                 if player.x + YELLOW_SPACE_SHIP.get_width() / 2 - bul.x + RED_LASER.get_width() / 2 < 0:
                     # move left
                     # if no start of map
@@ -170,30 +195,28 @@ def main():
                     # else move left
                     else:
                         player.x -= abs(player_vel + 10)
-        # run from lasers
-        for enemy in invaders:
-            for bul in player.lasers:
-                if bul.x in range(enemy.x - int(RED_LASER.get_width()),
-                                  enemy.x + size_of_enemies) and bul.y + RED_LASER.get_height() > enemy.y:
-                    # if enemyen more left from laser
-                    if enemy.x + size_of_enemies / 2 - bul.x + RED_LASER.get_width() / 2 < 0:
-                        # move left
-                        # if no start of map
-                        if enemy.x - 8 > 0:
-                            enemy.x -= 8
-                        # else move right
-                        else:
-                            enemy.x += 8*5
-                    elif enemy.x + size_of_enemies / 2 - bul.x + RED_LASER.get_width() / 2 > 0:
-                        # move right
-                        # if not end of map
-                        if enemy.x + size_of_enemies + 8 < WIDTH:
-                            enemy.x += 8
-                        # else move left
-                        else:
-                            enemy.x -= 8*5
-
-
+        # # run from lasers
+        # for enemy in invaders:
+        #     for bul in player.lasers:
+        #         if bul.x in range(enemy.x - int(RED_LASER.get_width()),
+        #                           enemy.x + size_of_enemies) and bul.y + RED_LASER.get_height() > enemy.y:
+        #             # if enemyen more left from laser
+        #             if enemy.x + size_of_enemies / 2 - bul.x + RED_LASER.get_width() / 2 < 0:
+        #                 # move left
+        #                 # if no start of map
+        #                 if enemy.x - 8 > 0:
+        #                     enemy.x -= 8
+        #                 # else move right
+        #                 else:
+        #                     enemy.x += 8*5
+        #             elif enemy.x + size_of_enemies / 2 - bul.x + RED_LASER.get_width() / 2 > 0:
+        #                 # move right
+        #                 # if not end of map
+        #                 if enemy.x + size_of_enemies + 8 < WIDTH:
+        #                     enemy.x += 8
+        #                 # else move left
+        #                 else:
+        #                     enemy.x -= 8*5
 
 
 
@@ -211,7 +234,7 @@ def main():
 
         # move them down
         for invader in invaders[:]:
-            invader.action(enemy_vel)
+            invader.action(enemy_vel,player)
             invader.move_lasers(laser_vel, player, bunkers)
 
             if random.randrange(0, 2 * 60) == 1:  # probability of 50% of shooting
@@ -229,6 +252,9 @@ def main():
         # чтобы можно было передавать несколько массивов врагов (у тебя их два - враги-корабли и астероиды)
         player.move_lasers(-laser_vel, invaders, bunkers)  # to make the space cruft to do up
         # Тут была главная проблема, потому что ты не проверяла на сталкивания с астероидами вообще
+
+        csv_write('output.csv', [str(cast_away), str(time.time() - start_time), str(level), 'alpha-beta', 'expetr minimax'])
+
         pygame.display.update()  # refresh the screen
         redraw_window()
 

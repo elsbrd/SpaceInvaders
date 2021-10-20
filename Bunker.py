@@ -29,4 +29,5 @@ class Bunker():
         return self.bunker_img.get_height()
 
 
-
+    def copy_object(self):
+        return Bunker(self.x,self.y)
