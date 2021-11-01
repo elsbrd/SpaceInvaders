@@ -1,6 +1,7 @@
 import random
 import sys
 from matplotlib import pyplot as plt
+
 from settings import *
 
 matrix = [[0 for i in range(HEIGHT)] for j in range(WIDTH)]
@@ -17,10 +18,8 @@ def check(matrix, ship_mask_with_pos):
         except IndexError:
             return 2
 
-
 visited = []
 found = False
-
 
 def bfs(matrix, current, player):
     '''прохід бфс'''
@@ -60,6 +59,8 @@ def bfs(matrix, current, player):
     return []
 
 
+
+
 def dfs(WIN, matrix, ship_mask_with_pos, path, curr):
     global found
     global visited
@@ -97,6 +98,8 @@ queue = []
 poped_queue = []
 
 path = []
+
+
 
 matrix_uni = [[[] for i in range(WIDTH)] for j in range(HEIGHT)]
 
@@ -141,6 +144,7 @@ def uniform(matrix, current, player):
     return []
 
 
+
 class Node():
     """A node class for A* Pathfinding"""
 
@@ -156,7 +160,7 @@ class Node():
         return self.position == other.position
 
 
-def astar(WIN, maze, start, end_center, mask, pl):
+def astar(WIN, maze, start, end_center, mask,pl):
     """Returns a list of tuples as a path from the given start to the given end in the given maze"""
 
     # Create start and end node
@@ -175,11 +179,14 @@ def astar(WIN, maze, start, end_center, mask, pl):
         counter -= 1
         # Get the current node
         current_node = open_list[0]
+
         current_index = 0
         for index, item in enumerate(open_list):
             if item.f < current_node.f:
                 current_node = item
                 current_index = index
+        # WIN.set_at(current_node.position, (255, 255, 0))
+        # pygame.display.update()
         # Pop current off open list, add to closed list
         open_list.pop(current_index)
         closed_list.append(current_node)
@@ -190,8 +197,7 @@ def astar(WIN, maze, start, end_center, mask, pl):
         #     WIN.set_at(i,(255,124,10))
 
         if check(maze, [(h[0] + current_node.position[0] - int(YELLOW_SPACE_SHIP.get_width() / 2),
-                         h[1] + current_node.position[1] - int(YELLOW_SPACE_SHIP.get_height() / 2)) for h in
-                        mask]) == 1:
+                         h[1] + current_node.position[1] - int(YELLOW_SPACE_SHIP.get_height() / 2)) for h in mask]) == 1:
             # print('found')
 
             path = []
@@ -252,14 +258,13 @@ def astar(WIN, maze, start, end_center, mask, pl):
             # pygame.display.update()
 
             open_list.append(child)
-    if counter <= 0:
-        pl.x += 20 * random.choice([-1, 1])
-
+    if counter<=0:
+        pl.x+= 20*random.choice([-1,1])
 
 def find_way(uni_matrix, point):
     way = [point]
     while point:
-        print('way', way)
+        print('way',way)
         point = uni_matrix[point[1]][point[0]]
         if point:
             print('point not empty')
@@ -271,7 +276,7 @@ def find_way(uni_matrix, point):
 
 def search(player, invaders, bunkers, method):
     global matrix
-    global visited, queue, path, found, line, poped_queue, matrix_uni
+    global visited, queue, path, found, line, poped_queue,matrix_uni
     lines = []
 
     for GOAL in invaders:
@@ -293,7 +298,7 @@ def search(player, invaders, bunkers, method):
                 matrix[i[1] + GOAL.y][i[0] + GOAL.x] = 5
             except IndexError:
                 continue
-
+    
         pos = []
         for i in player.mask.outline():
             if method == 'dfs':
@@ -309,13 +314,11 @@ def search(player, invaders, bunkers, method):
                     continue
 
         line = astar(WIN, matrix,
-                     (
-                     int(player.x + player.ship_img.get_width() / 2), int(player.y + player.ship_img.get_height() / 2)),
-                     (int(GOAL.x + GOAL.ship_img.get_width() / 2), int(GOAL.y + GOAL.ship_img.get_height() / 2)), pos,
-                     player)
+                         (int(player.x + player.ship_img.get_width() / 2), int(player.y + player.ship_img.get_height() / 2)),
+                         (int(GOAL.x + GOAL.ship_img.get_width() / 2), int(GOAL.y + GOAL.ship_img.get_height() / 2)), pos,player)
 
         poped_queue = []
-        matrix_uni = [[[] for i in range(WIDTH)] for j in range(HEIGHT)]
+        matrix_uni=[[[] for i in range(WIDTH)] for j in range(HEIGHT)]
         if line:
             lines.append(line)
         found = False
@@ -324,8 +327,6 @@ def search(player, invaders, bunkers, method):
         path = []
     found = False
     return lines
-
-
 
 
 def draw_matrix(field):
