@@ -1,7 +1,10 @@
+from time import time
+
 import pygame
 import random
 
 from Search import search
+from csv_write import csv_write
 from settings import *
 from Ship import Ship
 from Bunker import Bunker
@@ -26,6 +29,7 @@ def main():
     FPS = 30
     level = 0
     lives = 5
+    start_time = 0
     main_font = pygame.font.SysFont("comicsans", 50)
     lost_font = pygame.font.SysFont("comicsans", 60)
 
@@ -229,6 +233,10 @@ def main():
         # чтобы можно было передавать несколько массивов врагов (у тебя их два - враги-корабли и астероиды)
         player.move_lasers(-laser_vel, invaders, bunkers)  # to make the space cruft to do up
         # Тут была главная проблема, потому что ты не проверяла на сталкивания с астероидами вообще
+        csv_write('output.csv',
+                  [str(cast_away), str(time() - start_time), str(level), 'alpha-beta pruning',
+                   'expectimax minimax'])
+
         pygame.display.update()  # refresh the screen
         redraw_window()
 
