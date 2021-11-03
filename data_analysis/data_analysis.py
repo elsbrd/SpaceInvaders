@@ -30,7 +30,7 @@ set_seed(seed)
 
 
 categorical = ["algorithm", "is_win"]
-data = pd.read_csv(r'C:\Users\elisa\PycharmProjects\SpaceInvaders\output2.csv')
+data = pd.read_csv(r'C:\Users\elisa\PycharmProjects\SpaceInvaders\output.csv')
 train_data, test_data = data.iloc[:-5], data.iloc[-5:]
 
 figure = plt.figure(figsize=(8, 8))

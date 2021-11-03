@@ -26,7 +26,7 @@
 )
 
 
-(setv data (pd.read_csv "output2.csv" ))
+(setv data (pd.read_csv "output.csv" ))
 (print (data.head))
 
 (setv test_data
