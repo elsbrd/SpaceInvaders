@@ -29,12 +29,12 @@ seed = 42
 set_seed(seed)
 
 
-categorical = ["algo", "is_win"]
-data = pd.read_csv(r'C:\Users\elisa\PycharmProjects\SpaceInvaders\output.csv')
+categorical = ["algorithm", "is_win"]
+data = pd.read_csv(r'C:\Users\elisa\PycharmProjects\SpaceInvaders\output2.csv')
 train_data, test_data = data.iloc[:-5], data.iloc[-5:]
 
 figure = plt.figure(figsize=(8, 8))
-train_data.algo.value_counts().plot.pie(
+train_data.algorithm.value_counts().plot.pie(
     title="Algorithm",
     autopct="%1.1f%%",
     cmap="viridis",
