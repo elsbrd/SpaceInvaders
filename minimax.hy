@@ -7,16 +7,16 @@
     (setv ^int x 0)
     (setv ^int y 0)
 
-    (defn manhattan [self other]
+    (defn manhattan [self ^"Vector" other]
       (+ (abs (- self.x other.x)) (abs (- self.y other.y)))
     )
     (defn copy [self]
       (Vector self.x self.y)
     )
-    (defn __add__ [self other]
+    (defn __add__ [self ^"Vector" other]
       (Vector (+ self.x other.x) (+ self.y other.y))
     )
-    (defn __eq__ [self other]
+    (defn __eq__ [self ^"Vector" other]
       (and (= self.x other.x) (= self.y other.y))
     )
     (defn __iter__ [self]
@@ -24,6 +24,11 @@
     )
   )
 )
+
+(setv Position Vector)
+(setv Labyrinth np.ndarray)
+(setv Cost float)
+(setv Agent int)
 
 (defclass Move []
   (setv DOWN (Vector 0 1))
@@ -39,19 +44,14 @@
   )
 )
 
-(defclass MazeParser []
+(defclass parsing []
   (with-decorator staticmethod
-    (defn get_position [values value]
-      (for [x (range (get values.shape 0 ))]
-        (for [y (range (get values.shape 1))]
-          (if ( = (get (get values x) y) value)
-            (return (Vector y x))
-          )
-        )
-      )
+    (defn get_position [^np.ndarray values ^str value]
+      (setv coords (np.nonzero (= values value)))
+      (setv coords (lfor coord (cut coords None None -1) (coord.item)))
+      (Position (unpack-iterable coords))
     )
   )
-
   (with-decorator staticmethod
     (defn read_layout [^str path]
       (with [file (open path)]
@@ -60,54 +60,52 @@
       (np.array layout)
     )
   )
-
   (with-decorator staticmethod
     (defn load_layout [^str path]
-      (setv layout (MazeParser.read_layout path))
-      (print "Layout:" layout)
-      (setv maze (= layout "*"))
-      (setv pacman (MazeParser.get_position layout "P"))
-      (setv ghost (MazeParser.get_position layout "G"))
-      (, maze [pacman ghost])
+      (setv layout (Parser.read_layout path))
+      (setv labyrinth (= layout "#"))
+      (setv player (Parser.get_position layout "P"))
+      (setv invader(Parser.get_position layout "G"))
+      (, maze [lasers])
     )
   )
 )
 
 (with-decorator (dataclass :eq False)
   (defclass State []
-    (^np.ndarray maze)
-    (^(of list Vector) agents)
-    (setv ^(of tuple int Vector) last_move None)
+    (^Labyrinth labyrinth)
+    (^(of list Position) agents)
+    (setv ^(of tuple Agent Vector) last_move None)
 
     (with-decorator property
-      (defn pacman [self]
+      (defn player [self]
         (get self.agents 0)
       )
     )
     (with-decorator property
-      (defn ghost [self]
+      (defn lasers [self]
         (get self.agents 1)
       )
     )
     (with-decorator property
       (defn game_over [self]
-        (= self.pacman self.ghost)
+        (= self.player self.invader)
       )
     )
-    (defn get_moves [self agent]
+    (defn selectMoves [self ^Agent agent]
       (setv position (get self.agents agent))
       (setv moves [])
       (for [move (Move.list)]
         (setv (, xx yy) (+ position move))
-        (if-not (get (get self.maze yy) xx)
+        (if-not (get (get self.labyrinth yy) xx)
           (moves.append move)
         )
       )
       moves
     )
-    (defn generate_next [self agent move]
+    (defn generateNext [self ^Agent agent ^Vector move]
       (setv new_agents (lfor agent self.agents (agent.copy)))
-      (setv new_maze (self.maze.copy))
+      (setv new_lab (self.labyrinth.copy))
       (setv position (get self.agents agent))
       (setv (get new_agents agent) (+ position move))
       (State new_maze new_agents (, agent move))
@@ -118,7 +116,7 @@
 (with-decorator (dataclass :eq False)
   (defclass MinimaxState []
     (^State game)
-    (setv ^int agent 0)
+    (setv ^Agent agent 0)
     (setv ^int depth 0)
 
     (with-decorator property
@@ -140,7 +138,7 @@
   (defclass Minimax []
     (setv ^int max_depth 2)
 
-    (defn get_neighbors [self state]
+    (defn getNeighbors [self ^MinimaxState state]
       (setv depth (if (= state.agent 0) state.depth (+ state.depth 1)))
       (setv agent (% (+ state.agent 1) 2))
 
@@ -150,33 +148,39 @@
         (MinimaxState next_game agent depth)
       )
     )
-    (defn utility [self state]
+    (defn utility [self ^MinimaxState state]
       (if (. state.game game_over)
         (return (float "inf"))
       )
-      (setv pacman (. state.game pacman))
-      (setv ghost (. state.game ghost))
-      (pacman.manhattan ghost)
+      (setv player (. state.game player))
+      (setv invader (. state.game invader))
+      (pacman.manhattan invader)
     )
-    (defn is_terminal [self state]
+    (defn is_terminal [self ^MinimaxState state]
       (or (. state.game game_over) (= state.depth self.max_depth))
     )
-    (defn minimax [self state]
+    (defn minimax [self ^MinimaxState state]
       (if (self.is_terminal state) (MinimaxValue (self.utility state))
           (= state.agent 0) (self.max_value state)
           (self.min_value state)
       )
     )
-    (defn min_value [self state]
-      (setv value (min (lfor neighbor (self.get_neighbors state)
+    (defn min_value [self ^MinimaxState state]
+      (setv values
+        (lfor neighbor (self.get_neighbors state)
           (MinimaxValue (. (self.minimax neighbor) cost) neighbor.move)
-        ) :key (fn [neighbor] neighbor.cost)))
+        )
+      )
+      (setv value (min values :key (fn [neighbor] neighbor.cost)))
       value
     )
     (defn max_value [self ^MinimaxState state]
-      (setv value (max (lfor neighbor (self.get_neighbors state)
+      (setv values
+        (lfor neighbor (self.get_neighbors state)
           (MinimaxValue (. (self.minimax neighbor) cost) neighbor.move)
-        ) :key (fn [neighbor] neighbor.cost)))
+        )
+      )
+      (setv value (max values :key (fn [neighbor] neighbor.cost)))
       value
     )
     (defn __call__ [self ^State state]
@@ -185,9 +189,8 @@
   )
 )
 
-(setv (, maze agents) (MazeParser.load_layout "small.lay"))
-(print "Agents [Pacman Ghost]:\n" agents)
-(setv state (State maze agents))
+(print "Player and Invader: " agents)
+(setv state (State labyrinth agents))
 (setv minimax (Minimax 2))
 (setv best_move (minimax state))
-(print "Best Move:\n" best_move)
+(print "Best Move: " best_move)
